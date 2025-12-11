@@ -5,6 +5,10 @@ use ndarray_linalg::UPLO;
 #[cfg(feature = "plot")]
 use plotters::prelude::*;
 use std::collections::HashMap;
+use std::io::{BufWriter};
+use std::fs::{File};
+use std::io::Write;
+use std::path::Path;
 
 
 pub struct PcaModel {
@@ -23,6 +27,30 @@ impl PcaModel {
             components: Array2::zeros((0, 0)),
             coords: Array2::zeros((0, 0)),
         }
+    }
+
+    /// Write PCA coordinates to TSV (n rows × k columns).
+    pub fn to_tsv<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
+        self.to_delimited( path, '\t' )
+    }
+
+    /// Optional: allow custom separators
+    pub fn to_delimited<P: AsRef<Path>>(&self, path: P, sep: char) -> std::io::Result<()> {
+        let f = File::create(path)?;
+        let mut w = BufWriter::new(f);
+
+        for row in self.coords.outer_iter() {
+            let mut first = true;
+            for v in row {
+                if !first {
+                    write!(w, "{}", sep)?;
+                }
+                write!(w, "{:.6}", v)?;
+                first = false;
+            }
+            writeln!(w)?;
+        }
+        Ok(())
     }
     
 

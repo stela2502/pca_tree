@@ -1,6 +1,8 @@
 use clap::Parser;
 use pca_tree::PcaTree;
 use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
+
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -11,6 +13,14 @@ struct Args {
     /// Number of PCA components
     #[arg(short, long, default_value_t = 3)]
     k: usize,
+
+    /// Output table with PCA coordinates
+    #[arg(long)]
+    coords: Option<String>,
+
+    /// Output table with MST edges
+    #[arg(long)]
+    edges: Option<String>,
 
     /// Write PCA plot (PNG)
     #[arg(long)]
@@ -37,16 +47,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ✅ NEW: constructor does all work
     let model = PcaTree::new(seqs, args.k)?;
 
-    println!("PCA coordinates:");
-    for (i, row) in model.coords().outer_iter().enumerate() {
-        println!("{i}\t{:?}", row.to_vec());
-    }
 
-    println!("\nTree edges (parent child dist):");
-    for (p, c, d) in model.tree() {
-        println!("{p}\t{c}\t{d:.4}");
-    }
+    // Determine PCA output path
+    let coords_path: PathBuf = if let Some(user) = args.coords.as_ref() {
+        PathBuf::from(user)
+    } else {
+        default_output_path(&args.input, "_pca.tsv")
+    };
 
+    // Determine MST edge output path
+    let edges_path: PathBuf = if let Some(user) = args.edges.as_ref() {
+        PathBuf::from(user)
+    } else {
+        default_output_path(&args.input, "_tree.tsv")
+    };
+
+    model.pca.to_tsv(&coords_path)?;
+    println!("Written PCA coords → {}", coords_path.display());
+    
+    model.tree.to_tsv(&edges_path)?;
+    println!("Written MSt edges → {}", edges_path.display());
+    
 
     #[cfg(feature = "plot")]
     {
@@ -61,7 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    
+
     #[cfg(not(feature = "plot"))]
     {
         if args.plot_pca.is_some() || args.plot_tree.is_some() {
@@ -71,5 +92,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
 
     Ok(())
+}
+
+
+
+fn default_output_path(input: &str, suffix: &str) -> PathBuf {
+    let path = Path::new(input);
+    let stem = path.file_stem().unwrap_or_default();
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+
+    let mut out = PathBuf::new();
+    out.push(parent);
+    out.push(format!("{}{}", stem.to_string_lossy(), suffix));
+
+    out
 }
 

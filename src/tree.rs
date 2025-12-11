@@ -3,6 +3,10 @@ use ndarray::{Array2, ArrayView1};
 #[cfg(feature = "plot")]
 use plotters::prelude::*;
 use std::collections::{VecDeque};
+use std::io::{BufWriter};
+use std::fs::{File};
+use std::io::Write;
+use std::path::Path;
 
 pub struct MstTree {
     pub edges: Vec<(usize, usize, f32)>,
@@ -12,6 +16,26 @@ impl MstTree {
 
     pub fn len(&self) -> usize {
         self.edges.len()
+    }
+
+    /// Write MST edges as TSV: parent<TAB>child<TAB>distance
+    pub fn to_tsv<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
+        self.to_delimited(path, '\t')
+    }
+
+    /// Write MST edges using a custom delimiter.
+    pub fn to_delimited<P: AsRef<Path>>(&self, path: P, sep: char) -> std::io::Result<()> {
+        use std::fs::File;
+        use std::io::{BufWriter, Write};
+
+        let f = File::create(path)?;
+        let mut w = BufWriter::new(f);
+
+        for (p, c, d) in &self.edges {
+            writeln!(w, "{}{}{}{}.{:.6}", p, sep, c, sep, d)?;
+        }
+
+        Ok(())
     }
 
     pub fn total_length(&self) -> f32 {
