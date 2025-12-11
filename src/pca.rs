@@ -2,6 +2,7 @@ use ndarray::{Array1, Array2, Axis};
 use ndarray_linalg::eigh::Eigh;
 use std::error::Error;
 use ndarray_linalg::UPLO;
+#[cfg(feature = "plot")]
 use plotters::prelude::*;
 use std::collections::HashMap;
 
@@ -57,7 +58,7 @@ impl PcaModel {
     pub fn components(&self) -> &Array2<f32> {
         &self.components
     }
-
+    #[cfg(feature = "plot")]
     pub fn plot_2d_clusters(
         &self,
         tree: &crate::MstTree,
@@ -125,7 +126,7 @@ impl PcaModel {
         root.present()?;
         Ok(())
     }
-
+    #[cfg(feature = "plot")]
     pub fn plot_2d(&self, outfile: &str) -> Result<(), Box<dyn std::error::Error>> {
         use plotters::prelude::*;
 

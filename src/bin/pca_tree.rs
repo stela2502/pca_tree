@@ -48,15 +48,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
 
-    
-    if let Some(f) = args.plot_pca {
-        model.pca.plot_2d_clusters( &model.tree, &f)?;
-        eprintln!("✅ PCA plot written to {f}");
+    #[cfg(feature = "plot")]
+    {
+        if let Some(f) = args.plot_pca {
+            model.pca.plot_2d_clusters( &model.tree, &f)?;
+            eprintln!("✅ PCA plot written to {f}");
+        }
+
+        if let Some(f) = args.plot_tree {
+            model.tree.plot_2d(&model.coords(), &f)?;
+            eprintln!("✅ Tree plot written to {f}");
+        }
     }
 
-    if let Some(f) = args.plot_tree {
-        model.tree.plot_2d(&model.coords(), &f)?;
-        eprintln!("✅ Tree plot written to {f}");
+    
+    #[cfg(not(feature = "plot"))]
+    {
+        if args.plot_pca.is_some() || args.plot_tree.is_some() {
+            eprintln!("⚠️ Plotting is disabled. Recompile with: cargo build --features plot");
+        }
     }
     
 

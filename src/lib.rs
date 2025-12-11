@@ -51,5 +51,6 @@ impl PcaTree {
     /// Tree edge list
     pub fn tree(&self) -> &Vec<(usize, usize, f32)> {
         &self.tree.edges
+
     }
 }

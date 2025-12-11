@@ -1,5 +1,6 @@
 use ndarray::{Array2, ArrayView1};
 #[allow(dead_code, unused)] // creates a warning otherwise
+#[cfg(feature = "plot")]
 use plotters::prelude::*;
 use std::collections::{VecDeque};
 
@@ -211,7 +212,7 @@ impl MstTree {
             .map(|(a, b, _)| (*a, *b))
             .collect()
     }
-
+    #[cfg(feature = "plot")]
     pub fn plot_2d(&self, coords: &ndarray::Array2<f32>, outfile: &str)
         -> Result<(), Box<dyn std::error::Error>>
     {
