@@ -104,6 +104,23 @@ impl PcaModel {
             )));
         }
 
+        let max_k = std::cmp::min(n - 1, p - 1);
+
+        if max_k < 1 {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Clone too sparse for PCA (n={}, p={})", n, p),
+            )));
+        }
+
+        if self.k > max_k {
+            eprintln!(
+                "⚠️  PCA k={} reduced to {} (data allows at most min(n-1, p-1))",
+                self.k, max_k
+            );
+            self.k = max_k;
+        }
+
         // mean-center (same behavior as before)
         let mean = x.mean_axis(Axis(0)).unwrap();
         let mut centered = x.clone();
