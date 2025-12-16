@@ -52,7 +52,7 @@ impl ClonoMap {
 
         let encoded = encoder.encode_relative(&seqs)?;
 
-        println!("      and I encoded {} unique amino acid respresentations ({} cols)", encoded.nrows(),  encoded.ncols() );
+        println!("      and I encoded {} unique amino acid respresentations ({} hot one columns)", encoded.nrows(),  encoded.ncols() );
 
         // Fit PCA
         let mut pca = PcaModel::new(k);
