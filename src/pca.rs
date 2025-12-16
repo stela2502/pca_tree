@@ -1,5 +1,5 @@
 use ndarray::{Array1, Array2, Axis};
-use ndarray_linalg::{ SVD, UPLO, eigh::Eigh};
+//use ndarray_linalg::{ SVD, UPLO, eigh::Eigh};
 use std::error::Error;
 #[cfg(feature = "plot")]
 use plotters::prelude::*;
@@ -8,7 +8,10 @@ use std::io::{BufWriter, Write};
 use std::fs::{File};
 use std::path::Path;
 use crate::CloneData;
-
+use linfa::dataset::DatasetBase;
+use linfa_reduction::Pca;
+use linfa::traits::Fit;
+use linfa::prelude::Transformer;
 
 pub struct PcaModel {
     pub k: usize,
@@ -33,13 +36,13 @@ impl PcaModel {
         Ok(self.to_delimited(  clone, '\t', path, )?)
     }
 
-    /// Compute PC1 direction from PCA coords
+
     pub fn principal_axis(&self) -> Array1<f32> {
-        let coords64 = self.coords.map(|x| *x as f64);
-        let (_, _, vt) = coords64.svd(true, true).unwrap();
-        let binding = vt.unwrap();
-        let pc1 = binding.row(0);
-        pc1.map(|x| *x as f32).to_owned()
+        // direction along PC1 axis in PCA coords = unit vector (1,0,0,...)
+        // because coords are already in PC space
+        let mut axis = Array1::<f32>::zeros(self.coords.ncols());
+        if axis.len() > 0 { axis[0] = 1.0; }
+        axis
     }
 
     /// Optional: allow custom separators
@@ -70,30 +73,32 @@ impl PcaModel {
     
 
     pub fn fit_transform(&mut self, x: &Array2<f32>) -> Result<(), Box<dyn Error>> {
-        let (n, p) = x.dim();
+        let (n, _p) = x.dim();
 
+        // mean-center (same behavior as before)
         let mean = x.mean_axis(Axis(0)).unwrap();
         let mut centered = x.clone();
-
         for mut row in centered.outer_iter_mut() {
             row -= &mean;
         }
 
-        let cov = centered.t().dot(&centered) / (n as f32 - 1.0);
-        let (eigvals, eigvecs) = cov.eigh(UPLO::Upper)?;
+        // linfa expects f64
+        let centered64 = centered.mapv(|v| v as f64);
+        let dataset = DatasetBase::from(centered64);
 
-        let mut idx: Vec<_> = (0..eigvals.len()).collect();
-        idx.sort_by(|a, b| eigvals[*b].partial_cmp(&eigvals[*a]).unwrap());
-
-        let comps = Array2::from_shape_fn((p, self.k), |(i, j)| eigvecs[(i, idx[j])]);
-        let proj = centered.dot(&comps);
+        let pca = Pca::params(self.k).fit(&dataset)?;
+        let projected = pca.transform(dataset).records; // (n x k)
 
         self.mean = mean;
-        self.components = comps;
-        self.coords = proj;
+        self.coords = projected.mapv(|v| v as f32);
+
+        // components optional: linfa provides projection; loadings access differs by version
+        // You can either store empty or extract loadings if you need them.
+        self.components = Array2::zeros((0, 0));
 
         Ok(())
     }
+
     pub fn coords(&self) -> &Array2<f32> {
         &self.coords
     }
@@ -218,9 +223,7 @@ impl PcaModel {
                 .into_iter()
                 .enumerate()
                 .map(|(i, row)| {
-                    let t = row.iter().zip(axis.iter())
-                        .map(|(x, a)| x * a)
-                        .sum::<f32>();
+                    let t = row[0];
                     (i, t)
                 })
                 .collect();

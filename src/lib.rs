@@ -21,7 +21,7 @@ use std::collections::HashMap;
 
 
 /// Combined PCA + MST pipeline structure.
-pub struct PcaTree {
+pub struct ClonoMap {
     pub encoder: OneHotEncoder,
     pub pca: PcaModel,
     pub tree: MstTree,
@@ -29,7 +29,7 @@ pub struct PcaTree {
 
 
 
-impl PcaTree {
+impl ClonoMap {
 
     /// Build PCA + MST from raw sequences.
     pub fn new(seqs: Vec<String>, k: usize) -> Result<Self, Box<dyn Error>> {
@@ -48,7 +48,7 @@ impl PcaTree {
 
         // Encode sequences numerically
         let mut encoder = OneHotEncoder::new();
-        println!("PcaTree::new - I got {} sequences", seqs.len() );
+        println!("ClonoMap::new - I got {} sequences", seqs.len() );
 
         let encoded = encoder.encode_relative(&seqs)?;
 

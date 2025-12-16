@@ -1,5 +1,5 @@
 use clap::Parser;
-use pca_tree::PcaTree;
+use clonomap::ClonoMap;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // ✅ NEW: constructor does all work
-    let model = PcaTree::new(seqs, args.k)?;
+    let model = ClonoMap::new(seqs, args.k)?;
 
 
     // Determine PCA output path
