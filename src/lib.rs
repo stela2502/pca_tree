@@ -1,4 +1,9 @@
-//! PCA-Tree: DNA sequence PCA + MST builder
+//! ClonoMap: scalable inference of clonal structure in large AIRR-seq clones.
+//!
+//! ClonoMap infers subclonal structure within B-cell receptor (BCR) clones
+//! using mutation-aware geometric clustering rather than full phylogenetic
+//! reconstruction. It is designed to scale to clones containing tens of
+//! thousands of sequences and integrates seamlessly with Change-O outputs.
 
 mod encoder;
 mod pca;

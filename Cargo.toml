@@ -1,7 +1,8 @@
 [package]
-name = "pca_tree"
+name = "clonomap"
 version = "0.1.0"
 edition = "2024"
+description = "Scalable inference of clonal structure in large AIRR-seq clones"
 
 [features]
 default = []
