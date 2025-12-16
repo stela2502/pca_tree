@@ -45,35 +45,64 @@ impl PcaModel {
         axis
     }
 
-    /// Optional: allow custom separators
-    pub fn to_delimited<P: AsRef<Path>>(&self, info: &CloneData, sep: char, path: P ) -> std::io::Result<()> {
-        let f = File::create(path)?;
-        let mut w = BufWriter::new(f);
+   
+/// Write PCA coordinates with sequence annotations.
+/// Format:
+/// DNA <sep> AA <sep> PC1 <sep> PC2 ...
+pub fn to_delimited<P: AsRef<Path>>(
+    &self,
+    info: &CloneData,
+    sep: char,
+    path: P,
+) -> std::io::Result<()> {
 
-        if self.coords.nrows() != info.len() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!(
-                    "PCA length ({}) does not match PCA rows ({})",
-                    self.coords.nrows(),
-                    info.len()
-                ),
-            ));
-        }
+    let f = File::create(path)?;
+    let mut w = BufWriter::new(f);
 
-        for (row_idx, row) in self.coords.outer_iter().enumerate() {
-            write!(w, "{}{}{}", info.dna[row_idx], sep, info.aa[row_idx])?;
-            for v in row {
-                write!(w, "{}{}", sep,v)?;
-            }
-             writeln!(w)?;
-        }
-        Ok(())
+    // --- sanity check ---
+    if self.coords.nrows() != info.len() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!(
+                "PCA rows ({}) do not match clone data length ({})",
+                self.coords.nrows(),
+                info.len()
+            ),
+        ));
     }
-    
+
+    // --- write rows ---
+    for (row_idx, row) in self.coords.outer_iter().enumerate() {
+        // DNA + AA
+        write!(
+            w,
+            "{}{}{}",
+            info.dna[row_idx],
+            sep,
+            info.aa[row_idx]
+        )?;
+
+        // PCA coordinates
+        for v in row.iter() {
+            write!(w, "{}{:.6}", sep, v)?;
+        }
+
+        writeln!(w)?;
+    }
+
+    Ok(())
+} 
 
     pub fn fit_transform(&mut self, x: &Array2<f32>) -> Result<(), Box<dyn Error>> {
-        let (n, _p) = x.dim();
+        let (n, p) = x.dim();
+
+        // Require enough samples AND enough features
+        if n < 3 || p < 2 {
+            return Err(format!(
+                "Clone too sparse for PCA (n={}, p={})",
+                n, p
+            ));
+        }
 
         // mean-center (same behavior as before)
         let mean = x.mean_axis(Axis(0)).unwrap();
