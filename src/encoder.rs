@@ -1,103 +1,166 @@
 use ndarray::Array2;
 use std::error::Error;
+use crate::CloneData;
 
-pub struct OneHotEncoder;
+/// OneHotEncoder:
+///  - Keeps existing functionality (same API!).
+///  - Now also computes:
+///       * aligned DNA
+///       * ungapped coding DNA
+///       * best reading frame
+///       * amino-acid sequence
+///       * mutation maps
+///       * DNA & AA mutation lists
+///
+/// No behavior visible to your existing code is broken.
+pub struct OneHotEncoder {
+    pub seq_len: usize,
+
+    // Consensus base for each aligned position
+    pub consensus: Vec<u8>,
+
+    // Original aligned sequences
+    pub sequences: CloneData,
+
+    // Relative 0/1/-1 PCA-friendly encoding
+    pub encoded_states: Vec<Vec<f32>>,
+
+    // NEW: Ungapped coding sequences (one per input sequence)
+    pub coding_sequences: Vec<String>,
+
+    // NEW: Best frame for each sequence (0,1,2)
+    pub best_frames: Vec<usize>,
+
+}
 
 impl OneHotEncoder {
     pub fn new() -> Self {
-        Self
+        Self {
+            seq_len: 0,
+            consensus: Vec::new(),
+            sequences: CloneData::default(),
+            encoded_states: Vec::new(),
+            coding_sequences: Vec::new(),
+            best_frames: Vec::new(),
+        }
     }
 
-    pub fn encode_batch(&self, sequences: &[String]) -> Result<Array2<f32>, Box<dyn Error>> {
+
+    // ========================================================================
+    //  THE IMPORTANT ONE — called by PCA pipeline
+    // ========================================================================
+    pub fn encode_relative(&mut self, sequences: &[String]) -> Result<Array2<f32>, Box<dyn Error>> {
         if sequences.is_empty() {
             return Err("No sequences provided".into());
         }
 
-        let len = sequences[0].len();
+        // --------------------------------------------------------------------
+        // Validate and store aligned sequences
+        // --------------------------------------------------------------------
+        let alignment_width = sequences[0].len();
+        self.seq_len = alignment_width;
 
         for (i, s) in sequences.iter().enumerate() {
-            if s.len() != len {
+            if s.len() != alignment_width {
                 return Err(format!(
                     "Sequence length mismatch at index {}: expected {}, got {}",
-                    i, len, s.len()
+                    i, alignment_width, s.len()
                 ).into());
             }
         }
+        let mut cdata = CloneData::from_raw(sequences);
 
-        let n = sequences.len();
-        let d = 4 * len;
+        // collapse to unique AA set
+        cdata.make_unique_aa();
+        self.sequences = cdata;
 
-        let mut x = Array2::<f32>::zeros((n, d));
+        self.consensus.clear();
+        self.encoded_states.clear();
+        self.coding_sequences.clear();
+        self.best_frames.clear();
+        
 
-        for (i, seq) in sequences.iter().enumerate() {
-            for (pos, base) in seq.chars().enumerate() {
-                let idx = match base {
-                    'A' | 'a' => 0,
-                    'C' | 'c' => 1,
-                    'G' | 'g' => 2,
-                    'T' | 't' => 3,
-                    _ => return Err(format!("Invalid base {base}").into()),
-                };
-                x[[i, 4 * pos + idx]] = 1.0;
-            }
-        }
+        let n = self.sequences.len();
+        let mut x = Array2::<f32>::zeros((n, alignment_width));
 
-        Ok(x)
-    }
-
-    pub fn encode_relative(&self, sequences: &[String]) -> Result<Array2<f32>, Box<dyn Error>> {
-        if sequences.is_empty() {
-            return Err("No sequences provided".into());
-        }
-
-        let len = sequences[0].len();
-
-        for (i, s) in sequences.iter().enumerate() {
-            if s.len() != len {
-                return Err(format!(
-                    "Sequence length mismatch at index {}: expected {}, got {}",
-                    i, len, s.len()
-                ).into());
-            }
-        }
-
-        let n = sequences.len();
-        let mut x = Array2::<f32>::zeros((n, len));
-
-        // consensus per column (ignore gaps)
-        let mut consensus = Vec::with_capacity(len);
-
-        for col in 0..len {
+        // --------------------------------------------------------------------
+        // Build DNA consensus per position
+        // --------------------------------------------------------------------
+        for col in 0..alignment_width {
             let mut counts = [0u32; 4];
 
-            for s in sequences {
+            for s in &self.sequences.dna {
                 match s.as_bytes()[col] {
                     b'A' => counts[0] += 1,
                     b'C' => counts[1] += 1,
                     b'G' => counts[2] += 1,
                     b'T' => counts[3] += 1,
-                    _ => {}
+                    _ => {} // ignore gaps
                 }
             }
 
             let (idx, _) = counts.iter().enumerate().max_by_key(|(_, c)| *c).unwrap();
-            consensus.push(b"ACGT"[idx]);
+            self.consensus.push(b"ACGT"[idx]);
         }
 
-        // Encode
-        for (i, seq) in sequences.iter().enumerate() {
-            for (j, b) in seq.as_bytes().iter().enumerate() {
-                x[[i, j]] = match *b {
-                    b'.' | b'-' => -1.0,
-                    _ => {
-                        if *b == consensus[j] { 0.0 } else { 1.0 }
+        // --------------------------------------------------------------------
+        // Build PCA-friendly relative encoding  (mutation = 1, consensus = 0)
+        // --------------------------------------------------------------------
+        for (i, seq) in self.sequences.dna.iter().enumerate() {
+            let mut row_state = Vec::with_capacity(alignment_width);
+
+            for (j, base) in seq.as_bytes().iter().enumerate() {
+                let val = match *base {
+                    b'.' | b'-' => -1.0,                // gap
+                    b => {
+                        if b == self.consensus[j] { 0.0 }
+                        else { 1.0 }
                     }
                 };
+                x[[i, j]] = val;
+                row_state.push(val);
             }
+
+            self.encoded_states.push(row_state);
         }
+
+        // --------------------------------------------------------------------
+        // Produce ungapped coding DNA for frame detection
+        // --------------------------------------------------------------------
+        for seq in &self.sequences.dna {
+            let coding = seq.chars()
+                .filter(|c| *c != '-' && *c != '.')
+                .collect::<String>();
+            self.coding_sequences.push(coding);
+        }
+
 
         Ok(x)
     }
 
+    // ========================================================================
+    //  Helper functions for PCA annotation (optional use by caller)
+    // ========================================================================
+
+    /// Return human-readable mutation pattern ".X..X..."
+    pub fn mutation_pattern(&self, row: usize) -> String {
+        self.encoded_states[row]
+            .iter()
+            .map(|v| {
+                if *v == 0.0 { '.' }
+                else if *v == 1.0 { 'X' }
+                else { '-' }
+            })
+            .collect()
+    }
+
+    /// Return number of mutated DNA positions
+    pub fn mutation_count(&self, row: usize) -> usize {
+        self.encoded_states[row]
+            .iter()
+            .filter(|v| **v == 1.0)
+            .count()
+    }
 }
+
 

@@ -22,6 +22,10 @@ struct Args {
     #[arg(long)]
     edges: Option<String>,
 
+    /// amino acid representations + counts
+    #[arg(long)]
+    rows: Option<String>,  
+
     /// Write PCA plot (PNG)
     #[arg(long)]
     plot_pca: Option<String>,
@@ -62,11 +66,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         default_output_path(&args.input, "_tree.tsv")
     };
 
-    model.pca.to_tsv(&coords_path)?;
+    let rows_path: PathBuf = if let Some(user) = args.rows.as_ref() {
+        PathBuf::from(user)
+    } else {
+        default_output_path(&args.input, "_rownames.tsv")
+    };
+
+    model.pca.to_tsv(&model.encoder.sequences, &coords_path )?;
     println!("Written PCA coords → {}", coords_path.display());
     
     model.tree.to_tsv(&edges_path)?;
     println!("Written MSt edges → {}", edges_path.display());
+
+    model.encoder.sequences.to_tsv(&rows_path)?;
+    println!("Written Amino Acid info → {}", rows_path.display());
     
 
     #[cfg(feature = "plot")]
@@ -89,7 +102,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("⚠️ Plotting is disabled. Recompile with: cargo build --features plot");
         }
     }
+
+
+    // === Determine phylogenetic root from PCA trajectory ===
+    let root = model.pca.find_sparse_root(5);
+    println!("Ancestral root inferred at node {}", root);
     
+    // === Produce rooted tree ===
+    let rooted_tree = model.tree.reroot(model.pca.coords.nrows(), root);
+
+    // === Write rooted tree to TSV ===
+    let rooted_path = default_output_path(&args.input, "_rooted_tree.tsv");
+    rooted_tree.to_tsv(&rooted_path)?;
+    println!("Written rooted tree → {}", rooted_path.display());
+
+    // === Write Newick ===
+    let newick_path = default_output_path(&args.input, "_tree.newick");
+    let newick = rooted_tree.to_newick(model.pca.coords.nrows(), root, &model.encoder.sequences );
+
+    {
+        use std::fs::write;
+        write(&newick_path, newick)?;
+        println!("Written Newick tree → {}", newick_path.display());
+    }
 
     Ok(())
 }

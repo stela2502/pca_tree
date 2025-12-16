@@ -161,14 +161,27 @@ So assuming you have been using Change-O to analyze VDJ recombination evens you 
 These files would contain an sequence_alignment column and a column_id column and with that you can uste the above function like this:
 
 ```R
-my_infile="Path/To/Your/file.tsv"
-df = read_delim( my_infile )
-clones = tables(df[,'clone_id'])
-## take the Change-O for the smaller if you want
-clones = names(clones[which(clones > 200)])
-for (clone_id in clones){
-    srts = df[which(df[,'clone_id'] == clone_id), "sequence_alignment"]
-    pca_tree( srts, k=30, prefix= basename(my_infile), plots=T)
+
+base_dir <- "path/to/your/files"
+
+files <- list.files(
+  path = base_dir,
+  pattern = "Your file pattern",
+  full.names = TRUE
+)
+
+print(files)
+for (file in files) {
+    print( paste( "Processing file", file ) )
+    df = read.delim( file )
+    clones = table(df[,'clone_id'])
+    ## take the Change-O for the smaller if you want
+    clones = names(clones[which(clones > 200)])
+    for (clone_id in clones){
+        print(paste("   -clone id", clone_id, " (n=", length(which(df[,'clone_id'] == clone_id)),")"))
+        srts = df[which(df[,'clone_id'] == clone_id), "sequence_alignment"]
+        pca_tree( srts, k=30, prefix= tools::file_path_sans_ext(my_infile), plots=T)
+    }
 }
 
 ```

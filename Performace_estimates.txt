@@ -1,0 +1,374 @@
+# Performace measurements of the R integration
+# Processed are aligned sequences of a bulk VDJ sequencing experiment.
+# Clone IDs were assigned using Change-O
+
+> source( '~/git_Projects/pca_tree/R_itegration.R')
+
+ [1] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/A_2025_ProductiveCloneDfined.tsv"
+ [2] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/B_2025_ProductiveCloneDfined.tsv"
+ [3] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/D_2025_ProductiveCloneDfined.tsv"
+ [4] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/E_2025_ProductiveCloneDfined.tsv"
+ [5] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/F_2025_ProductiveCloneDfined.tsv"
+ [6] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/G_2025_ProductiveCloneDfined.tsv"
+ [7] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/H_2025_ProductiveCloneDfined.tsv"
+ [8] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/I_2025_ProductiveCloneDfined.tsv"
+ [9] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/L_2025_ProductiveCloneDfined.tsv"
+[10] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/M_2025_ProductiveCloneDfined.tsv"
+[11] "/home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/O_2025_ProductiveCloneDfined.tsv"
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/A_2025_ProductiveCloneDfined.tsv 
+   - clone 118_len_385 (n = 309)
+      clone time: 0.15 sec
+   - clone 123_len_385 (n = 248)
+      clone time: 0.13 sec
+   - clone 240_len_373 (n = 344)
+      clone time: 0.09 sec
+   - clone 28_len_385 (n = 269)
+      clone time: 0.09 sec
+   - clone 281_len_367 (n = 1208)
+      clone time: 0.19 sec
+   - clone 29_len_385 (n = 883)
+      clone time: 0.17 sec
+   - clone 314_len_376 (n = 249)
+      clone time: 0.11 sec
+   - clone 343_len_373 (n = 2049)
+      clone time: 0.30 sec
+   - clone 351_len_376 (n = 215)
+      clone time: 0.12 sec
+   - clone 374_len_391 (n = 1738)
+      clone time: 0.25 sec
+   - clone 381_len_385 (n = 1827)
+      clone time: 0.27 sec
+   - clone 382_len_385 (n = 432)
+      clone time: 0.10 sec
+   - clone 392_len_376 (n = 257)
+      clone time: 0.07 sec
+   - clone 406_len_376 (n = 2417)
+      clone time: 0.35 sec
+   - clone 625_len_382 (n = 1439)
+      clone time: 0.24 sec
+   - clone 634_len_385 (n = 7096)
+      clone time: 1.33 sec
+   - clone 650_len_382 (n = 1333)
+      clone time: 0.22 sec
+   - clone 675_len_379 (n = 633)
+      clone time: 0.15 sec
+   - clone 681_len_382 (n = 931)
+      clone time: 0.22 sec
+   - clone 713_len_379 (n = 292)
+      clone time: 0.08 sec
+   - clone 739_len_394 (n = 393)
+      clone time: 0.12 sec
+   - clone 769_len_376 (n = 7161)
+      clone time: 1.32 sec
+   - clone 837_len_370 (n = 821)
+      clone time: 0.18 sec
+   - clone 880_len_379 (n = 5853)
+      clone time: 1.02 sec
+   - clone 881_len_379 (n = 358)
+      clone time: 0.11 sec
+   - clone 892_len_388 (n = 7359)
+      clone time: 1.39 sec
+   - clone 902_len_385 (n = 20593)
+      clone time: 7.63 sec
+File completed in: 18.37 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/B_2025_ProductiveCloneDfined.tsv 
+   - clone 100_len_379 (n = 235)
+      clone time: 0.05 sec
+   - clone 228_len_379 (n = 525)
+      clone time: 0.14 sec
+   - clone 241_len_376 (n = 402)
+      clone time: 0.13 sec
+   - clone 272_len_376 (n = 670)
+      clone time: 0.19 sec
+   - clone 312_len_382 (n = 214)
+      clone time: 0.06 sec
+   - clone 350_len_382 (n = 206)
+      clone time: 0.11 sec
+   - clone 368_len_394 (n = 1311)
+      clone time: 0.21 sec
+   - clone 373_len_370 (n = 427)
+      clone time: 0.13 sec
+   - clone 609_len_373 (n = 377)
+      clone time: 0.12 sec
+   - clone 686_len_373 (n = 1157)
+      clone time: 0.19 sec
+   - clone 711_len_403 (n = 250)
+      clone time: 0.09 sec
+   - clone 720_len_385 (n = 206)
+      clone time: 0.07 sec
+   - clone 741_len_391 (n = 1034)
+      clone time: 0.19 sec
+   - clone 789_len_379 (n = 3160)
+      clone time: 0.53 sec
+   - clone 800_len_379 (n = 5941)
+      clone time: 0.95 sec
+   - clone 804_len_385 (n = 3710)
+      clone time: 0.53 sec
+   - clone 811_len_379 (n = 40507)
+      clone time: 22.55 sec
+File completed in: 27.83 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/D_2025_ProductiveCloneDfined.tsv 
+   - clone 115_len_385 (n = 641)
+      clone time: 0.14 sec
+   - clone 22_len_376 (n = 428)
+      clone time: 0.09 sec
+   - clone 24_len_376 (n = 10554)
+      clone time: 2.40 sec
+   - clone 252_len_376 (n = 151132)
+      clone time: 254.34 sec
+   - clone 96_len_385 (n = 1949)
+      clone time: 0.28 sec
+   - clone 99_len_385 (n = 1228)
+      clone time: 0.21 sec
+File completed in: 260.73 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/E_2025_ProductiveCloneDfined.tsv 
+   - clone 156_len_382 (n = 842)
+      clone time: 0.15 sec
+   - clone 181_len_391 (n = 790)
+      clone time: 0.20 sec
+   - clone 182_len_391 (n = 2003)
+      clone time: 0.31 sec
+   - clone 207_len_376 (n = 1356)
+      clone time: 0.23 sec
+   - clone 248_len_385 (n = 1203)
+      clone time: 0.18 sec
+   - clone 258_len_391 (n = 1188)
+      clone time: 0.20 sec
+   - clone 295_len_394 (n = 595)
+      clone time: 0.12 sec
+   - clone 296_len_382 (n = 2272)
+      clone time: 0.41 sec
+   - clone 298_len_382 (n = 306)
+      clone time: 0.08 sec
+   - clone 320_len_382 (n = 4954)
+      clone time: 0.78 sec
+   - clone 344_len_388 (n = 1042)
+      clone time: 0.16 sec
+   - clone 354_len_361 (n = 357)
+      clone time: 0.11 sec
+   - clone 362_len_400 (n = 1867)
+      clone time: 0.30 sec
+   - clone 363_len_385 (n = 3921)
+      clone time: 0.67 sec
+   - clone 381_len_370 (n = 8045)
+      clone time: 1.82 sec
+   - clone 473_len_385 (n = 4290)
+      clone time: 0.72 sec
+   - clone 552_len_385 (n = 12597)
+      clone time: 3.53 sec
+   - clone 573_len_391 (n = 29188)
+      clone time: 13.82 sec
+   - clone 70_len_376 (n = 465)
+      clone time: 0.16 sec
+   - clone 92_len_382 (n = 313)
+      clone time: 0.07 sec
+   - clone 93_len_376 (n = 943)
+      clone time: 0.22 sec
+File completed in: 26.15 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/F_2025_ProductiveCloneDfined.tsv 
+   - clone 129_len_376 (n = 617)
+      clone time: 0.14 sec
+   - clone 159_len_385 (n = 1545)
+      clone time: 0.22 sec
+   - clone 164_len_379 (n = 2351)
+      clone time: 0.32 sec
+   - clone 167_len_385 (n = 5696)
+      clone time: 0.98 sec
+File completed in: 2.04 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/G_2025_ProductiveCloneDfined.tsv 
+   - clone 134_len_385 (n = 4309)
+      clone time: 0.84 sec
+   - clone 136_len_382 (n = 5877)
+      clone time: 1.41 sec
+   - clone 17_len_382 (n = 243)
+      clone time: 0.05 sec
+   - clone 22_len_382 (n = 265)
+      clone time: 0.09 sec
+   - clone 45_len_385 (n = 236)
+      clone time: 0.09 sec
+File completed in: 2.82 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/H_2025_ProductiveCloneDfined.tsv 
+   - clone 118_len_379 (n = 1183)
+      clone time: 0.19 sec
+   - clone 15_len_373 (n = 418)
+      clone time: 0.15 sec
+   - clone 187_len_382 (n = 5163)
+      clone time: 0.98 sec
+   - clone 192_len_385 (n = 5178)
+      clone time: 1.02 sec
+   - clone 198_len_379 (n = 27227)
+      clone time: 14.74 sec
+   - clone 38_len_382 (n = 297)
+      clone time: 0.11 sec
+   - clone 69_len_388 (n = 1276)
+      clone time: 0.20 sec
+   - clone 95_len_385 (n = 238)
+      clone time: 0.05 sec
+File completed in: 18.36 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/I_2025_ProductiveCloneDfined.tsv 
+   - clone 118_len_382 (n = 263)
+      clone time: 0.08 sec
+   - clone 124_len_379 (n = 292)
+      clone time: 0.08 sec
+   - clone 234_len_373 (n = 4688)
+      clone time: 0.78 sec
+   - clone 268_len_379 (n = 9349)
+      clone time: 2.18 sec
+   - clone 278_len_382 (n = 31764)
+      clone time: 15.90 sec
+   - clone 58_len_373 (n = 781)
+      clone time: 0.18 sec
+   - clone 61_len_382 (n = 1084)
+      clone time: 0.22 sec
+File completed in: 20.66 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/L_2025_ProductiveCloneDfined.tsv 
+   - clone 156_len_385 (n = 2082)
+      clone time: 0.30 sec
+   - clone 159_len_382 (n = 3701)
+      clone time: 0.55 sec
+   - clone 165_len_385 (n = 5787)
+      clone time: 0.99 sec
+   - clone 170_len_403 (n = 4653)
+      clone time: 0.72 sec
+   - clone 55_len_382 (n = 227)
+      clone time: 0.06 sec
+   - clone 80_len_370 (n = 224)
+      clone time: 0.05 sec
+File completed in: 3.24 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/M_2025_ProductiveCloneDfined.tsv 
+   - clone 133_len_388 (n = 1571)
+      clone time: 0.26 sec
+   - clone 171_len_388 (n = 1572)
+      clone time: 0.24 sec
+   - clone 183_len_382 (n = 342)
+      clone time: 0.08 sec
+   - clone 200_len_388 (n = 2817)
+      clone time: 0.42 sec
+   - clone 227_len_382 (n = 327)
+      clone time: 0.10 sec
+   - clone 245_len_373 (n = 391)
+      clone time: 0.15 sec
+   - clone 248_len_382 (n = 451)
+      clone time: 0.08 sec
+   - clone 250_len_373 (n = 225)
+      clone time: 0.10 sec
+   - clone 254_len_373 (n = 273)
+      clone time: 0.07 sec
+   - clone 278_len_373 (n = 547)
+      clone time: 0.17 sec
+   - clone 290_len_370 (n = 336)
+      clone time: 0.08 sec
+   - clone 305_len_370 (n = 250)
+      clone time: 0.07 sec
+   - clone 320_len_370 (n = 3347)
+      clone time: 0.48 sec
+   - clone 348_len_379 (n = 357)
+      clone time: 0.09 sec
+   - clone 370_len_376 (n = 325)
+      clone time: 0.09 sec
+   - clone 393_len_379 (n = 1238)
+      clone time: 0.22 sec
+   - clone 395_len_379 (n = 255)
+      clone time: 0.10 sec
+   - clone 47_len_385 (n = 324)
+      clone time: 0.09 sec
+   - clone 477_len_394 (n = 335)
+      clone time: 0.09 sec
+   - clone 478_len_376 (n = 1551)
+      clone time: 0.23 sec
+   - clone 485_len_376 (n = 2887)
+      clone time: 0.40 sec
+   - clone 552_len_379 (n = 6205)
+      clone time: 1.07 sec
+   - clone 559_len_382 (n = 784)
+      clone time: 0.17 sec
+   - clone 560_len_382 (n = 653)
+      clone time: 0.14 sec
+   - clone 561_len_382 (n = 875)
+      clone time: 0.17 sec
+   - clone 587_len_376 (n = 8938)
+      clone time: 2.01 sec
+   - clone 598_len_382 (n = 9237)
+      clone time: 2.13 sec
+   - clone 607_len_385 (n = 10677)
+      clone time: 2.63 sec
+   - clone 63_len_385 (n = 468)
+      clone time: 0.19 sec
+   - clone 64_len_385 (n = 298)
+      clone time: 0.06 sec
+   - clone 81_len_385 (n = 1035)
+      clone time: 0.18 sec
+File completed in: 13.98 sec
+
+------------------------------------------------------------
+Processing file: /home/med-sal/sens05_shared/jyuan/no_backup/GM/Stefans_analysis/ChangeO_Db_2025/DefineClones_2025/O_2025_ProductiveCloneDfined.tsv 
+   - clone 151_len_382 (n = 1024)
+      clone time: 0.20 sec
+   - clone 191_len_376 (n = 233)
+      clone time: 0.11 sec
+   - clone 251_len_376 (n = 228)
+      clone time: 0.06 sec
+   - clone 260_len_385 (n = 771)
+      clone time: 0.17 sec
+   - clone 293_len_385 (n = 551)
+      clone time: 0.18 sec
+   - clone 307_len_376 (n = 1178)
+      clone time: 0.19 sec
+   - clone 324_len_385 (n = 256)
+      clone time: 0.07 sec
+   - clone 364_len_370 (n = 5872)
+      clone time: 0.99 sec
+   - clone 377_len_379 (n = 448)
+      clone time: 0.13 sec
+   - clone 381_len_385 (n = 234)
+      clone time: 0.07 sec
+   - clone 396_len_379 (n = 1122)
+      clone time: 0.22 sec
+   - clone 411_len_385 (n = 274)
+      clone time: 0.08 sec
+   - clone 427_len_379 (n = 295)
+      clone time: 0.15 sec
+   - clone 429_len_370 (n = 5905)
+      clone time: 1.02 sec
+   - clone 451_len_382 (n = 2002)
+      clone time: 0.35 sec
+   - clone 452_len_382 (n = 209)
+      clone time: 0.07 sec
+   - clone 504_len_379 (n = 272)
+      clone time: 0.08 sec
+   - clone 510_len_388 (n = 2821)
+      clone time: 0.42 sec
+   - clone 555_len_394 (n = 393)
+      clone time: 0.22 sec
+   - clone 57_len_382 (n = 233)
+      clone time: 0.09 sec
+   - clone 59_len_382 (n = 555)
+      clone time: 0.16 sec
+   - clone 593_len_373 (n = 236)
+      clone time: 0.08 sec
+File completed in: 5.90 sec
+
+============================================================
+TOTAL RUNTIME: 400.12 seconds (6.67 minutes)
+============================================================
+

@@ -1,14 +1,13 @@
 use ndarray::{Array1, Array2, Axis};
-use ndarray_linalg::eigh::Eigh;
+use ndarray_linalg::{ SVD, UPLO, eigh::Eigh};
 use std::error::Error;
-use ndarray_linalg::UPLO;
 #[cfg(feature = "plot")]
 use plotters::prelude::*;
 use std::collections::HashMap;
-use std::io::{BufWriter};
+use std::io::{BufWriter, Write};
 use std::fs::{File};
-use std::io::Write;
 use std::path::Path;
+use crate::CloneData;
 
 
 pub struct PcaModel {
@@ -30,25 +29,41 @@ impl PcaModel {
     }
 
     /// Write PCA coordinates to TSV (n rows × k columns).
-    pub fn to_tsv<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
-        self.to_delimited( path, '\t' )
+    pub fn to_tsv<P: AsRef<Path>>(&self, clone: &CloneData, path: P) -> Result<(), Box<dyn Error>>{
+        Ok(self.to_delimited(  clone, '\t', path, )?)
+    }
+
+    /// Compute PC1 direction from PCA coords
+    pub fn principal_axis(&self) -> Array1<f32> {
+        let coords64 = self.coords.map(|x| *x as f64);
+        let (_, _, vt) = coords64.svd(true, true).unwrap();
+        let binding = vt.unwrap();
+        let pc1 = binding.row(0);
+        pc1.map(|x| *x as f32).to_owned()
     }
 
     /// Optional: allow custom separators
-    pub fn to_delimited<P: AsRef<Path>>(&self, path: P, sep: char) -> std::io::Result<()> {
+    pub fn to_delimited<P: AsRef<Path>>(&self, info: &CloneData, sep: char, path: P ) -> std::io::Result<()> {
         let f = File::create(path)?;
         let mut w = BufWriter::new(f);
 
-        for row in self.coords.outer_iter() {
-            let mut first = true;
+        if self.coords.nrows() != info.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!(
+                    "PCA length ({}) does not match PCA rows ({})",
+                    self.coords.nrows(),
+                    info.len()
+                ),
+            ));
+        }
+
+        for (row_idx, row) in self.coords.outer_iter().enumerate() {
+            write!(w, "{}{}{}", info.dna[row_idx], sep, info.aa[row_idx])?;
             for v in row {
-                if !first {
-                    write!(w, "{}", sep)?;
-                }
-                write!(w, "{:.6}", v)?;
-                first = false;
+                write!(w, "{}{}", sep,v)?;
             }
-            writeln!(w)?;
+             writeln!(w)?;
         }
         Ok(())
     }
@@ -183,5 +198,146 @@ impl PcaModel {
 
         Ok(())
     }
+
+
+    /// Find sparse root using PCA trajectory:
+    /// 1) Project onto PC1
+    /// 2) Take leftmost & rightmost endpoints
+    /// 3) Compute density (kNN) at both ends
+    /// 4) Sparse end = root
+    pub fn find_sparse_root(&self, k: usize) -> usize {
+        let coords = &self.coords;
+        let n = coords.nrows();
+
+        // === 1. get principal axis ===
+        let axis = self.principal_axis();
+
+        // === 2. project points on axis ===
+        let mut proj: Vec<(usize, f32)> =
+            coords.rows()
+                .into_iter()
+                .enumerate()
+                .map(|(i, row)| {
+                    let t = row.iter().zip(axis.iter())
+                        .map(|(x, a)| x * a)
+                        .sum::<f32>();
+                    (i, t)
+                })
+                .collect();
+
+        proj.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
+        let left = proj[0].0;
+        let right = proj[n - 1].0;
+
+        // === 3. compute local density for left & right endpoint ===
+        let left_density = self.knn_density( left, k);
+        let right_density = self.knn_density( right, k);
+
+        // === 4. choose sparse end ===
+        if left_density < right_density {
+            left
+        } else {
+            right
+        }
+    }
+
+    /// Compute kNN density for a single node
+    fn knn_density(&self, idx: usize, k: usize) -> f32 {
+        let coords = &self.coords;
+        let row_i = coords.row(idx);
+
+        let mut dists: Vec<f32> =
+            (0..coords.nrows())
+                .filter(|&j| j != idx)
+                .map(|j| {
+                    coords.row(j)
+                        .iter()
+                        .zip(row_i.iter())
+                        .map(|(a, b)| (a - b).powi(2))
+                        .sum::<f32>()
+                        .sqrt()
+                })
+                .collect();
+
+        dists.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        dists[k.min(dists.len() - 1)]
+    }
+
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ndarray::array;
+    use std::fs;
+
+    #[test]
+    fn test_pca_writer_with_seq_and_aa() {
+        // --------------------------------------------------------------
+        // 1. Prepare a tiny PCA model with known coords
+        // --------------------------------------------------------------
+        let coords = array![
+            [1.2345678_f32, -2.3456789, 3.4567890],
+            [4.1111111_f32,  5.2222222, 6.3333333],
+        ];
+
+        // Dummy struct that has "coords" like your PCA struct
+        struct DummyPca {
+            coords: ndarray::Array2<f32>,
+        }
+
+        impl DummyPca {
+            fn to_delimited<P: AsRef<std::path::Path>>(
+                &self,
+                path: P,
+                sep: char,
+                seq_ids: &[String],
+                aa_sequences: &[String],
+            ) -> std::io::Result<()> {
+                use std::fs::File;
+                use std::io::{BufWriter, Write};
+
+                let f = File::create(path)?;
+                let mut w = BufWriter::new(f);
+
+                for (row_idx, row) in self.coords.outer_iter().enumerate() {
+                    write!(w, "{}{}{}", seq_ids[row_idx], sep, aa_sequences[row_idx])?;
+                    for v in row {
+                        write!(w, "{}{:.6}", sep, v)?;
+                    }
+                    writeln!(w)?;
+                }
+
+                Ok(())
+            }
+        }
+
+        let pca = DummyPca { coords };
+
+        // --------------------------------------------------------------
+        // 2. Prepare test input for IDs and AA sequences
+        // --------------------------------------------------------------
+        let seq_ids = vec!["seqA".into(), "seqB".into()];
+        let aa_sequences = vec!["AAA".into(), "BBB".into()];
+
+        // --------------------------------------------------------------
+        // 3. Write to a temporary file
+        // --------------------------------------------------------------
+        let tmp = std::env::temp_dir().join("pca_writer_test.tsv");
+        pca.to_delimited(&tmp, '\t', &seq_ids, &aa_sequences)
+            .expect("failed to write test PCA file");
+
+        // --------------------------------------------------------------
+        // 4. Read file and validate content
+        // --------------------------------------------------------------
+        let content = fs::read_to_string(&tmp).expect("failed to read test output file");
+
+        let expected = "\
+seqA\tAAA\t1.234568\t-2.345679\t3.456789\n\
+seqB\tBBB\t4.111111\t5.222222\t6.333333\n";
+
+        assert_eq!(content, expected, "PCA writer output mismatch");
+    }
+}

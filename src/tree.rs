@@ -7,6 +7,10 @@ use std::io::{BufWriter};
 use std::fs::{File};
 use std::io::Write;
 use std::path::Path;
+use rayon::prelude::*;
+use crate::CloneData;
+
+use crate::PcaModel;
 
 pub struct MstTree {
     pub edges: Vec<(usize, usize, f32)>,
@@ -42,20 +46,31 @@ impl MstTree {
         self.edges.iter().map(|(_, _, d)| d).sum()
     }
 
-    pub fn build(coords: &Array2<f32>) -> Self {
+    pub fn build(model: &PcaModel) -> Self {
+        use rayon::prelude::*;
+        let coords = &model.coords;
+
         let n = coords.nrows();
+        if n == 0 {
+            return Self { edges: Vec::new() };
+        }
+
+        // MST state
         let mut in_tree = vec![false; n];
         let mut dist = vec![f32::INFINITY; n];
         let mut parent = vec![None; n];
 
         in_tree[0] = true;
 
+        // Initialize distances relative to node 0
         for i in 1..n {
             dist[i] = Self::euclidean(coords.row(0), coords.row(i));
             parent[i] = Some(0);
         }
 
-        for _ in 1..n - 1 {
+        // --- main MST loop ---
+        for _ in 1..(n - 1) {
+            // Find best vertex outside MST (sequential O(n))
             let mut best = None;
             let mut best_d = f32::INFINITY;
 
@@ -66,29 +81,81 @@ impl MstTree {
                 }
             }
 
-            let v = best.unwrap();
+            let v = best.expect("MST cannot proceed – no available node");
             in_tree[v] = true;
 
-            for u in 0..n {
-                if !in_tree[u] {
-                    let d = Self::euclidean(coords.row(v), coords.row(u));
-                    if d < dist[u] {
-                        dist[u] = d;
-                        parent[u] = Some(v);
-                    }
-                }
+            let v_row = coords.row(v);
+
+            // --- PARALLEL relax edges ---
+            // Instead of updating dist[u] directly (data race)
+            // we compute all improvements first, then apply them.
+            let updates: Vec<(usize, f32, usize)> = 
+                (0..n)
+                    .into_par_iter()
+                    .filter_map(|u| {
+                        if in_tree[u] {
+                            return None;
+                        }
+
+                        let d = Self::euclidean(v_row, coords.row(u));
+                        if d < dist[u] {
+                            Some((u, d, v)) // (node, new-dist, parent)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+            // Apply computed updates (sequential, very cheap)
+            for (u, newd, pv) in updates {
+                dist[u] = newd;
+                parent[u] = Some(pv);
             }
         }
 
-        let mut edges = Vec::new();
+        // Collect MST edges
+        let mut edges = Vec::with_capacity(n - 1);
         for i in 1..n {
             edges.push((parent[i].unwrap(), i, dist[i]));
         }
 
-        Self {
-            edges,
-        }
+        Self { edges }
     }
+
+    /// Find sparse root: the node located in the lowest-density PCA region.
+    /// Uses the distance to the k-th nearest neighbor.
+    pub fn find_sparse_root(model: &PcaModel, k: usize) -> usize {
+        let coords = &model.coords;
+        let n = coords.nrows();
+        let mut scores = vec![0.0; n];
+
+        for i in 0..n {
+            // Distance to all other nodes
+            let mut dists: Vec<f32> = (0..n)
+                .filter(|&j| j != i)
+                .map(|j| {
+                    coords.row(i)
+                        .iter()
+                        .zip(coords.row(j).iter())
+                        .map(|(x, y)| (x - y).powi(2))
+                        .sum::<f32>()
+                        .sqrt()
+                })
+                .collect();
+
+            // Sort and store k-th smallest distance
+            dists.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            scores[i] = dists[k.min(dists.len() - 1)];
+        }
+
+        // Node with the largest kNN radius = sparsest region = predicted root
+        scores
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .unwrap()
+            .0
+    }    
 
 
     pub fn clusters_elbow(&self, n_nodes: usize) -> Vec<Vec<usize>> {
@@ -275,6 +342,71 @@ impl MstTree {
 
         Ok(())
     }
+
+    /// Re-root the MST at the given node index
+    pub fn reroot(&self, n: usize, root: usize) -> MstTree {
+        let mut adj = vec![Vec::new(); n];
+
+        // Build adjacency
+        for &(p, c, d) in &self.edges {
+            adj[p].push((c, d));
+            adj[c].push((p, d));
+        }
+
+        let mut parent = vec![None; n];
+        let mut dist_to_parent = vec![0.0f32; n];
+
+        let mut queue = VecDeque::new();
+        queue.push_back(root);
+        parent[root] = Some(root); // mark root
+
+        // BFS to orient edges
+        while let Some(v) = queue.pop_front() {
+            for &(nbr, d) in &adj[v] {
+                if parent[nbr].is_none() {
+                    parent[nbr] = Some(v);
+                    dist_to_parent[nbr] = d;
+                    queue.push_back(nbr);
+                }
+            }
+        }
+
+        // Rebuild edges (skip the root)
+        let mut new_edges = Vec::new();
+        for i in 0..n {
+            if i == root {
+                continue;
+            }
+            let p = parent[i].unwrap();
+            new_edges.push((p, i, dist_to_parent[i]));
+        }
+
+        MstTree { edges: new_edges }
+    }
+
+    pub fn to_newick(&self, n: usize, root: usize, labels: &CloneData ) -> String {
+        let mut children = vec![Vec::new(); n];
+        for &(p, c, d) in &self.edges {
+            children[p].push((c, d));
+        }
+
+        fn build(idx: usize, children: &Vec<Vec<(usize, f32)>>, aa_labels:&[String] ) -> String {
+            if children[idx].is_empty() {
+                format!("{}", aa_labels[idx])
+            } else {
+                let inner: Vec<String> = children[idx]
+                    .iter()
+                    .map(|(c, d)| format!("{}:{:.4}", build(*c, children, aa_labels), d))
+                    .collect();
+
+                format!("({})", inner.join(","))
+            }
+        }
+        let keys = labels.aa_with_count_labels();
+
+        format!("{};", build(root, &children, &keys))
+    }
+
 
     fn euclidean(a: ArrayView1<f32>, b: ArrayView1<f32>) -> f32 {
         a.iter()

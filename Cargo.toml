@@ -12,3 +12,4 @@ clap = { version = "4", features = ["derive"] }
 ndarray = "0.15"
 ndarray-linalg = { version = "0.16", features = ["openblas-static"] }
 plotters = { version = "0.3", features = ["bitmap_backend"], optional = true }
+rayon = "1.11.0"
