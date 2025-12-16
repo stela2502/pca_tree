@@ -46,62 +46,62 @@ impl PcaModel {
     }
 
    
-/// Write PCA coordinates with sequence annotations.
-/// Format:
-/// DNA <sep> AA <sep> PC1 <sep> PC2 ...
-pub fn to_delimited<P: AsRef<Path>>(
-    &self,
-    info: &CloneData,
-    sep: char,
-    path: P,
-) -> std::io::Result<()> {
+    /// Write PCA coordinates with sequence annotations.
+    /// Format:
+    /// DNA <sep> AA <sep> PC1 <sep> PC2 ...
+    pub fn to_delimited<P: AsRef<Path>>(
+        &self,
+        info: &CloneData,
+        sep: char,
+        path: P,
+    ) -> std::io::Result<()> {
 
-    let f = File::create(path)?;
-    let mut w = BufWriter::new(f);
+        let f = File::create(path)?;
+        let mut w = BufWriter::new(f);
 
-    // --- sanity check ---
-    if self.coords.nrows() != info.len() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!(
-                "PCA rows ({}) do not match clone data length ({})",
-                self.coords.nrows(),
-                info.len()
-            ),
-        ));
-    }
-
-    // --- write rows ---
-    for (row_idx, row) in self.coords.outer_iter().enumerate() {
-        // DNA + AA
-        write!(
-            w,
-            "{}{}{}",
-            info.dna[row_idx],
-            sep,
-            info.aa[row_idx]
-        )?;
-
-        // PCA coordinates
-        for v in row.iter() {
-            write!(w, "{}{:.6}", sep, v)?;
+        // --- sanity check ---
+        if self.coords.nrows() != info.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!(
+                    "PCA rows ({}) do not match clone data length ({})",
+                    self.coords.nrows(),
+                    info.len()
+                ),
+            ));
         }
 
-        writeln!(w)?;
-    }
+        // --- write rows ---
+        for (row_idx, row) in self.coords.outer_iter().enumerate() {
+            // DNA + AA
+            write!(
+                w,
+                "{}{}{}",
+                info.dna[row_idx],
+                sep,
+                info.aa[row_idx]
+            )?;
 
-    Ok(())
-} 
+            // PCA coordinates
+            for v in row.iter() {
+                write!(w, "{}{:.6}", sep, v)?;
+            }
+
+            writeln!(w)?;
+        }
+
+        Ok(())
+    } 
 
     pub fn fit_transform(&mut self, x: &Array2<f32>) -> Result<(), Box<dyn Error>> {
         let (n, p) = x.dim();
 
         // Require enough samples AND enough features
         if n < 3 || p < 2 {
-            return Err(format!(
-                "Clone too sparse for PCA (n={}, p={})",
-                n, p
-            ));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Clone too sparse for PCA (n={}, p={})", n, p),
+            )));
         }
 
         // mean-center (same behavior as before)
