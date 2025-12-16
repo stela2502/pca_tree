@@ -15,4 +15,5 @@ linfa = "0.7"
 linfa-reduction = "0.7"
 plotters = { version = "0.3", features = ["bitmap_backend"], optional = true }
 rayon = "1.11.0"
+anyhow = "1.0.100"
 
